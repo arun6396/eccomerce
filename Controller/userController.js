@@ -1,15 +1,23 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../model/users");
-
-const SECRET_KEY = "mysecretkey123";
+require("dotenv").config();
+const { Role } = require("../model/users");
 
 exports.registerUser = async (req, res) => {
   try {
     const { username, mobileNumber, email, Dob, password, role } = req.body;
 
-    const roleUpper = role?.toUpperCase();
-    if (!["ADMIN", "MANAGER", "USER"].includes(roleUpper)) {
+    const roleMap = {
+      ADMIN: Role.ADMIN,
+      MANAGER: Role.MANAGER,
+      USER: Role.USER,
+    };
+    let roleValue;
+
+    if (typeof role === "number" && Object.values(Role).includes(role)) {
+      roleValue = role;
+    } else {
       return res.status(400).json({ message: "Invalid role" });
     }
 
@@ -39,7 +47,7 @@ exports.registerUser = async (req, res) => {
       mobileNumber,
       email,
       Dob,
-      role: roleUpper,
+      role: roleValue,
     });
     await newUser.save();
 
@@ -108,8 +116,8 @@ exports.loginUserByUsername = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { _id: user._id,username: user.username, role: user.role },
-      SECRET_KEY,
+      { _id: user._id, username: user.username, role: user.role },
+      process.env.SECRET_KEY,
       { expiresIn: "1h" }
     );
 
@@ -126,13 +134,17 @@ exports.loginUserByEmail = async (req, res) => {
     if (!user) {
       return res.status(404).json({ message: "Invalid credentials" });
     }
-    const isPasswordValid =await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(404).json({ message: "Invalid credentials" });
     }
-    const token = jwt.sign({ _id: user._id,email: user.email, role: user.role }, SECRET_KEY, {
-      expiresIn: "1h",
-    });
+    const token = jwt.sign(
+      { _id: user._id, email: user.email, role: user.role },
+      process.env.SECRET_KEY,
+      {
+        expiresIn: "1h",
+      }
+    );
     res.json({ token });
   } catch (err) {
     res.status(500).json({ message: "Server error ", err });
@@ -152,8 +164,8 @@ exports.loginUserByMobileNumber = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
     const token = jwt.sign(
-      { _id: user._id,mobileNumber: user.mobileNumber, role: user.role },
-      SECRET_KEY,
+      { _id: user._id, mobileNumber: user.mobileNumber, role: user.role },
+      process.env.SECRET_KEY,
       { expiresIn: "1h" }
     );
     res.json({ token });

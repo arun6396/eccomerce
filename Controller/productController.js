@@ -3,32 +3,11 @@ const products = require("../model/product");
 const { options } = require("../Router/productRouter");
 const gstCategory = require("../model/gstCategory");
 const discount = require("../model/discount");
+const Category = require("../model/category");
 
 exports.createProduct = async (req, res) => {
   try {
-    const {
-      ProductName,
-      price,
-      quantity,
-      category,
-      brand,
-      description,
-      stock,
-      isAvailable,
-    } = req.body;
-    const newProduct = new products({
-      ProductName,
-      price,
-      quantity,
-      category,
-      brand,
-      description,
-      stock,
-      isAvailable,
-      gstCategoryId:req.body.gstCategoryId,
-      discountId:req.body.discountId,
-      createdBy: req.body.createdBy,
-    });
+    const newProduct = await products.create(req.body);
     await newProduct.save();
     res.status(200).json({
       message: "Product created successfully",
@@ -41,7 +20,12 @@ exports.createProduct = async (req, res) => {
 
 exports.getAllProductId = async (req, res) => {
   try {
-    const product = await products.find().populate("gstCategoryId").populate("discountId").populate("createdBy");
+    const product = await products
+      .find()
+      .populate("categoryById")
+      .populate("gstCategoryId")
+      .populate("discountId")
+      .populate("createdBy");
     if (!product.length) {
       return res.status(404).json({ message: "No products found" });
     }
@@ -53,7 +37,12 @@ exports.getAllProductId = async (req, res) => {
 };
 exports.getProductById = async (req, res) => {
   try {
-    const product = await products.findById(req.params.id);
+    const product = await products
+      .findById(req.params.id)
+      .populate("categoryById")
+      .populate("gstCategoryId")
+      .populate("discountId")
+      .populate("createdBy");
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.status(200).json(product);
   } catch (err) {
@@ -88,16 +77,26 @@ exports.deleteProductById = async (req, res) => {
   }
 };
 
-exports.findByProductCategory = async (req, res) => {
+exports.findProductByCategoryId = async (req, res) => {
   try {
-    const category = req.params.category;
-    const product = await products.find({ category: category });
-    if (!product) {
-      return res.status(404).json({ message: "Category not found" });
+    const categoryId = req.params.id;
+
+    const foundProducts = await products
+      .find({ categoryById: categoryId })
+      .populate({
+        path: "categoryById",
+        select: "name description",
+      });
+
+    if (foundProducts.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "No products found for this category" });
     }
-    res.status(200).json(product);
+
+    res.status(200).json(foundProducts);
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -106,70 +105,102 @@ exports.productSearch = async (req, res) => {
     const { name, category, brand } = req.query;
 
     let filter = {};
-
     if (name) {
       filter.ProductName = { $regex: name, $options: "i" };
-    }
-    if (category) {
-      filter.category = { $regex: category, $options: "i" };
     }
     if (brand) {
       filter.brand = { $regex: brand, $options: "i" };
     }
 
-    const productsFound = await products
+    let query = products
       .find(filter)
       .populate("gstCategoryId")
       .populate("discountId")
       .populate("createdBy");
 
-    if (!productsFound.length) {
-      return res.status(404).json({ message: "No Product match your criteria" });
+    if (category) {
+      query = query.populate({
+        path: "categoryById",
+        match: { name: { $regex: category, $options: "i" } },
+      });
+    } else {
+      query = query.populate("categoryById");
     }
 
-    res.status(200).json(productsFound);
+    const productsFound = await query;
+
+    const filteredProducts = category
+      ? productsFound.filter((p) => p.categoryById)
+      : productsFound;
+
+    if (!filteredProducts.length) {
+      return res
+        .status(404)
+        .json({ message: "No product matches your criteria" });
+    }
+
+    res.status(200).json(filteredProducts);
   } catch (error) {
     console.error("Product search error:", error);
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
 
-exports.findByProductBrand= async(req,res)=>{
-  try{
-    const{brand} = req.query
-    if(!brand){
-      res.status(404).json({message:"Brand query is required"})
+exports.findByProductBrand = async (req, res) => {
+  try {
+    const { brand } = req.query;
+    if (!brand) {
+      res.status(404).json({ message: "Brand query is required" });
     }
-    const productFound = await products.find({
-      brand:{$regex:brand,options:"i"}
-    }).populate("gstCategoryId")
-    .populate("discountId").populate("createdBy")
-    if(!productFound){
-      return res.status(400).json({message : "Product not Found"});
+    const productFound = await products
+      .find({
+        brand: { $regex: brand, options: "i" },
+      })
+      .populate("categoryById")
+      .populate("gstCategoryId")
+      .populate("discountId")
+      .populate("createdBy");
+    if (!productFound) {
+      return res.status(400).json({ message: "Product not Found" });
     }
-    res.status(200).json({productFound})
+    res.status(200).json({ productFound });
+  } catch (error) {
+    res.status(500).json({ message: "Server Error ", error });
   }
-catch(error){
-  res.status(500).json({message:"Server Error ",error})
-}
+};
 
-}
+exports.findByProductName = async (req, res) => {
+  try {
+    const { ProductName } = req.query;
+    if (!ProductName) {
+      return res
+        .status(400)
+        .json({ message: "Product name query parameter required" });
+    }
+    const ProductFound = await products.find({
+      ProductName: { $regex: ProductName, $options: "i" },
+    });
+    if (!ProductFound) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    res.status(200).json(ProductFound);
+  } catch (error) {
+    res.status(500).json({ message: "Server error ", error });
+  }
+};
 
-exports.findByProductName =async(req,res)=>{
-  try{
-  const{ProductName}=req.query
-if(!ProductName){
-  return res.status(400).json({message:"Product name query parameter required"})
-}
-const ProductFound = await products.find({
-  ProductName:{$regex:ProductName,$options:"i"}
-});
-if(!ProductFound){
-  return res.status(404).json({message:"Product not found"})
-}
-res.status(200).json(ProductFound)
-}
-catch(error){
-  res.status(500).json({message:"Server error " ,error})
-}
-}
+exports.findProductByCategoryName = async (req, res) => {
+  try {
+    const { categoryName } = req.query;
+    const category = await Category.findOne({ name: categoryName });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    const Product = await products
+      .find({ categoryById: category._id })
+      .populate("categoryById");
+    res.status(200).json(Product);
+  } catch (error) {
+    res.status(500).json({ message: "Server error ", error: error.message });
+  }
+};

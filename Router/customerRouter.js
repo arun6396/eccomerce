@@ -9,5 +9,8 @@ router.get("/get/:id", verifyToken, customerController.customerById);
 router.put("/update/:id", verifyToken, customerController.updateCustomer);
 router.delete("/delete/:id", verifyToken, customerController.deleteCustomer);
 router.post("/login",customerController.loginCustomerByemail);
+router.post("/login/mobile",customerController.loginCustomerByMobileNumber);
+router.post("/login/name",customerController.loginCustomerByUsername);
 
 module.exports = router;
+

@@ -21,6 +21,7 @@ app.use('/api/gst',require("./Router/gstRouter"));
 app.use('/api/discount',require("./Router/discountRouter"));
 app.use('/api/order',require('./Router/orderRoter'));
 app.use('/api/review',require("./Router/reviewRouting"));
+app.use('/api/category',require('./Router/categoryRouter'));
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on Port: ${PORT}`);
