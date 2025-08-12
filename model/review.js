@@ -8,12 +8,12 @@ const reviewSchema = mongoose.Schema(
       required: true,
     },
 
-        productId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "product",
-          required: true,
-        },
-      
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "product",
+      required: true,
+    },
+
     rating: {
       type: Number,
       min: 1,
@@ -24,7 +24,10 @@ const reviewSchema = mongoose.Schema(
       type: String,
     },
   },
-  { timestamp: true }
+  {
+    versionKey: false,
+    timestamps: true,
+  }
 );
 
 module.exports = mongoose.model("review", reviewSchema);

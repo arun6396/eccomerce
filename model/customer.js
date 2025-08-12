@@ -25,6 +25,10 @@ const customerSchema = mongoose.Schema({
     ref:"users"
   },
 },
-{timeStamp:true});
+{
+  versionKey:false,
+  timestamps: true
+}
+);
 
 module.exports = mongoose.model("Customer",customerSchema);

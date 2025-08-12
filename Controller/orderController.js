@@ -1,33 +1,45 @@
 const order = require("../model/order");
 const product = require("../model/product");
-
+const { Status } = require("../model/order");
+const { PaymentType } = require("../model/order");
 exports.createOrder = async (req, res) => {
   try {
-    const {
-      customerId,
-      productDetails,
-      totalAmount,
-      status,
-      paymentType,
-      shipmentId,
-    } = req.body;
+    const { customerId, productDetails, status, paymentType, shipmentId } =
+      req.body;
+
+    let paymentValue;
+
     if (
-      !customerId ||
-      !productDetails ||
-      !paymentType ||
-      !shipmentId
+      typeof paymentType === "number" &&
+      Object.values(PaymentType).includes(paymentType)
     ) {
+      paymentValue = paymentType;
+    } else {
+      return res.status(400).json({ message: "Invalid payment type" });
+    }
+    let statusValue;
+    if (typeof status === "number" && Object.values(Status).includes(status)) {
+      statusValue = status;
+    } else {
+      return res.status(400).json({ message: "Invalid Status" });
+    }
+    if (!customerId || !productDetails || !paymentType || !shipmentId) {
       return res.status(404).json({ message: "Order fields missing" });
     }
 
+    let total = 0;
 
-let total = 0;
-
-   const updatedProductDetails = await Promise.all(
+    const updatedProductDetails = await Promise.all(
       productDetails.map(async (item) => {
         const productData = await product.findById(item.productId);
+
         if (!productData) {
           throw new Error(`Product not found: ${item.productId}`);
+        }
+        if (productData.stock < item.quantity) {
+          return res.status(404).json({
+            message: `Not enough stock for ${productData.ProductName}`,
+          });
         }
         total += productData.price * item.quantity;
         return {
@@ -38,20 +50,18 @@ let total = 0;
       })
     );
 
+    const orders = await order.create({
+      customerId,
+      productDetails: updatedProductDetails,
+      totalAmount: total,
+      status: statusValue,
+      paymentType: paymentValue,
+      shipmentId,
+    });
 
-const orders = await order.create({
-  customerId,
-  productDetails: updatedProductDetails,
-  totalAmount: total,
-  status,
-  paymentType,
-  shipmentId,
-});
-res.status(200).json(orders);
-
-   
+    res.status(200).json(orders);
   } catch (error) {
-    res.status(500).json({ message: "Server error ", error: error.message, });
+    res.status(500).json({ message: "Server error ", error: error.message });
   }
 };
 
@@ -117,7 +127,12 @@ exports.statusUpdate = async (req, res) => {
   try {
     const { status } = req.body;
 
-    const validateStatus = ["Pending", "Shipped", "Delivered", "Cancel"];
+    const validateStatus = [
+      Status.Pending,
+      Status.Shipped,
+      Status.Delivery,
+      Status.Cancel,
+    ];
     if (!validateStatus.includes(status)) {
       return res.status(404).json({ messsage: "Incorrect status" });
     }
@@ -139,7 +154,7 @@ exports.statusUpdate = async (req, res) => {
 exports.getPendingOrders = async (req, res) => {
   try {
     const pendingOrders = await order
-      .find({ status: "Pending" })
+      .find({ status: Status.Pending })
       .populate("customerId")
       .populate("productDetails.productId")
       .populate("shipmentId");
@@ -155,7 +170,7 @@ exports.getPendingOrders = async (req, res) => {
 exports.getDeliveredOrders = async (req, res) => {
   try {
     const DeliveredOrders = await order
-      .find({ status: "Delivered" })
+      .find({ status: Status.Delivery })
       .populate("customerId")
       .populate("productDetails.productId")
       .populate("shipmentId");
@@ -171,7 +186,7 @@ exports.getDeliveredOrders = async (req, res) => {
 exports.getShippedOrders = async (req, res) => {
   try {
     const shippedOrders = await order
-      .find({ status: "Shipped" })
+      .find({ status: Status.Shipped })
       .populate("customerId")
       .populate("productDetails.productId")
       .populate("shipmentId");
@@ -188,7 +203,7 @@ exports.getShippedOrders = async (req, res) => {
 exports.getCancelOrders = async (req, res) => {
   try {
     const cancelOrders = await order
-      .find({ status: "Cancel" })
+      .find({ status: Status.Cancel })
       .populate("customerId")
       .populate("productDetails.productId")
       .populate("shipmentId");

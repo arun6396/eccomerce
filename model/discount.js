@@ -13,7 +13,10 @@ const discountSchema = mongoose.Schema({
     }
 
 },
-{timestamps:true});
+{
+   versionKey:false,
+   timestamps: true
+  });
 
 
 module.exports=mongoose.model("discount",discountSchema);

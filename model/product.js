@@ -30,6 +30,9 @@ const productSchema = mongoose.Schema(
       ref: "User",
     },
   },
-  { timestamps: true }
+  {
+    versionKey: false,
+    timestamps: true,
+  }
 );
 module.exports = mongoose.model("product", productSchema);

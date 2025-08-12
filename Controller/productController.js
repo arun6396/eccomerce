@@ -7,14 +7,22 @@ const Category = require("../model/category");
 
 exports.createProduct = async (req, res) => {
   try {
-    const newProduct = await products.create(req.body);
-    await newProduct.save();
+    const stock = Number(req.body.stock) || 0;
+    const quantity = Number(req.body.quantity) || 0;
+
+    const updatedStock = stock + quantity;
+
+    const newProduct = await products.create({
+      ...req.body,
+      stock: updatedStock,
+    });
+
     res.status(200).json({
       message: "Product created successfully",
       product: newProduct,
     });
   } catch (err) {
-    res.status(500).json({ message: "Server error ", err });
+    res.status(500).json({ message: "Server error", err });
   }
 };
 
@@ -52,9 +60,17 @@ exports.getProductById = async (req, res) => {
 exports.updateProductById = async (req, res) => {
   try {
     const productId = req.params.id;
+    const product = await products.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const stock = Number(product.stock) || 0;
+    const quantity = Number(req.body.quantity) || 0;
+    const updateStock = stock + quantity;
     const updateProduct = await products.findByIdAndUpdate(
       productId,
-      { ...req.body, updatedBy: req.user._id },
+      { ...req.body, stock: updateStock, updatedBy: req.user._id },
       { new: true }
     );
     if (!updateProduct) {
@@ -202,5 +218,34 @@ exports.findProductByCategoryName = async (req, res) => {
     res.status(200).json(Product);
   } catch (error) {
     res.status(500).json({ message: "Server error ", error: error.message });
+  }
+};
+
+exports.updateQuantityById = async (req, res) => {
+  try {
+    const { quantity } = req.body;
+    const productId = req.params.id;
+
+    const product = await products.findById(productId);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const currentStock = Number(product.stock) || 0;
+    const productQuantity = Number(quantity) || 0;
+    const updatedStock = currentStock + productQuantity;
+
+    const productUpdate = await products.findByIdAndUpdate(
+      productId,
+      { stock: updatedStock },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "Product quantity updated successfully",
+      product: productUpdate,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };

@@ -12,6 +12,11 @@ percentage:{
     type:Number
 },
 
-})
+},
+{versionKey:false,
+    timestamps: true
+}
+
+);
 
 module.exports = mongoose.model("gstCategory",gstCategorySchema);

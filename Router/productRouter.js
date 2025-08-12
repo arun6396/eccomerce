@@ -16,5 +16,10 @@ router.get("/search", verifyToken, productController.productSearch);
 router.get("/brand", verifyToken, productController.findByProductBrand);
 router.get("/name", verifyToken, productController.findByProductName);
 router.get("/byname", verifyToken, productController.findProductByCategoryName);
+router.patch(
+  "/update/quantity/:id",
+  verifyToken,
+  productController.updateQuantityById
+);
 
 module.exports = router;
