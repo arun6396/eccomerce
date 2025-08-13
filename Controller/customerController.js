@@ -14,6 +14,12 @@ exports.createCustomer = async (req, res) => {
     if (await Customers.findOne({ email })) {
       return res.status(400).json({ message: "Email already exists" });
     }
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      return res
+        .status(400)
+        .json({ message: "MobileNumber must be 10 digits" });
+    }
+
     if (!password || password.length < 7) {
       return res
         .status(400)
@@ -159,5 +165,3 @@ exports.loginCustomerByUsername = async (req, res) => {
     res.status(500).json({ message: "Server error ", error: error.message });
   }
 };
-
-

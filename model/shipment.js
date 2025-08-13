@@ -1,7 +1,11 @@
 const mongoose = require("mongoose");
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const shipmentSchema = mongoose.Schema(
   {
+    _id:{
+      type:Number
+    },
     fullName: {
       type: String,
     },
@@ -30,4 +34,5 @@ const shipmentSchema = mongoose.Schema(
   }
 );
 
+shipmentSchema.plugin(AutoIncrement,{id:'shipmentId',$inc_field:'_id'})
 module.exports = mongoose.model("shipment", shipmentSchema);

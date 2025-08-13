@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 const Status = {
   Pending: 0,
   Shipped: 1,
@@ -14,25 +14,27 @@ const PaymentType = {
 };
 const orderSchema = new mongoose.Schema(
   {
+    _id:{
+      type:Number,
+    },
     customerId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Number,
       ref: "Customer",
       required: true,
     },
-    productDetails: [
-      {
+    
         productId: {
-          type: mongoose.Schema.Types.ObjectId,
+          type:Number,
           ref: "product",
           required: true,
         },
+        
         quantity: {
           type: Number,
           required: true,
           min: 1,
         },
-      },
-    ],
+      
     totalAmount: {
       type: Number,
     },
@@ -47,7 +49,7 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     shipmentId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Number,
       ref: "shipment",
       required: true,
     },
@@ -57,6 +59,8 @@ const orderSchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+orderSchema.plugin(AutoIncrement,{id:'orderId',$inc_field:'_id'})
 
 module.exports = mongoose.model("Order", orderSchema);
 module.exports.Status = Status;

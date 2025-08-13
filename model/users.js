@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const Role = {
   ADMIN: 0,
@@ -8,6 +9,7 @@ const Role = {
 
 const userSchema = new mongoose.Schema(
   {
+    _id: { type: Number }, 
     username: { type: String, required: true, unique: true },
     mobileNumber: { type: Number, unique: true },
     email: { type: String },
@@ -21,9 +23,11 @@ const userSchema = new mongoose.Schema(
   },
   {
     versionKey: false,
-    timestamps: true,
+    timestamps: true
   }
 );
+
+userSchema.plugin(AutoIncrement, { id: 'userId', inc_field: '_id' });
 
 module.exports = mongoose.model("User", userSchema);
 module.exports.Role = Role;

@@ -1,4 +1,6 @@
+const { model } = require("mongoose");
 const review = require("../model/review");
+const { populate } = require("../model/users");
 
 exports.createReview = async (req, res) => {
   try {
@@ -14,7 +16,7 @@ exports.getAllReview = async (req, res) => {
     const reviews = await review
       .find()
       .populate("customerId")
-      .populate("productId");
+      .populate({path:"productId",populate:[{path:'categoryById' ,model:'category'}],select: "categoryById brand descriptions" });
     if (!reviews.length) {
       return res.status(404).json({ message: "Review not found" });
     }

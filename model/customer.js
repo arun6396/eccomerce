@@ -1,7 +1,11 @@
 const mongoose = require("mongoose");
 const users = require("./users");
+const AutoIncrement = require('mongoose-sequence')(mongoose)
 
 const customerSchema = mongoose.Schema({
+  _id:{
+    type:Number
+  },
   customerName: {
     type: String,
     required: true,
@@ -21,7 +25,7 @@ const customerSchema = mongoose.Schema({
     type: String,
   },
   createdBy:{
-    type:mongoose.Schema.Types.ObjectId,
+    type:Number,
     ref:"users"
   },
 },
@@ -30,5 +34,6 @@ const customerSchema = mongoose.Schema({
   timestamps: true
 }
 );
+customerSchema.plugin(AutoIncrement,{id:'customerId',$inc_field:'_id'})
 
 module.exports = mongoose.model("Customer",customerSchema);

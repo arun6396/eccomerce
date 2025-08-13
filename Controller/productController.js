@@ -3,7 +3,7 @@ const products = require("../model/product");
 const { options } = require("../Router/productRouter");
 const gstCategory = require("../model/gstCategory");
 const discount = require("../model/discount");
-const Category = require("../model/category");
+const category = require("../model/category");
 
 exports.createProduct = async (req, res) => {
   try {
@@ -208,16 +208,25 @@ exports.findByProductName = async (req, res) => {
 exports.findProductByCategoryName = async (req, res) => {
   try {
     const { categoryName } = req.query;
-    const category = await Category.findOne({ name: categoryName });
-    if (!category) {
+
+    const Category = await category.findOne({ name: categoryName });
+
+    if (!Category) {
       return res.status(404).json({ message: "Category not found" });
     }
-    const Product = await products
-      .find({ categoryById: category._id })
+
+    const productsList = await products
+      .find({ categoryById: Category._id }) 
       .populate("categoryById");
-    res.status(200).json(Product);
+
+    if (productsList.length === 0) {
+      return res.status(404).json({ message: "No products found for this category" });
+    }
+
+    res.status(200).json(productsList);
+
   } catch (error) {
-    res.status(500).json({ message: "Server error ", error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 

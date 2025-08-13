@@ -33,6 +33,9 @@ exports.registerUser = async (req, res) => {
         .json({ message: "Mobile number already registered" });
     }
 
+    if (!/^\d{10}$/.test(mobileNumber)) {
+      return res.status(400).json({ message: " MobileNumber must 10 digits " });
+    }
     if (!password || password.length < 7) {
       return res
         .status(400)
@@ -93,11 +96,13 @@ exports.updateUserById = async (req, res) => {
 
 exports.deleteUserById = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
-    if (!user) return res.status(404).json({ message: "User id not found " });
-    res.status(200).json({ message: "User delete successfully" });
+    const user = await User.findByIdAndDelete( req.params.id ); 
+    if (!user) {
+      return res.status(404).json({ message: "User id not found" });
+    }
+    res.status(200).json({ message: "User deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Server error ", eror: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 

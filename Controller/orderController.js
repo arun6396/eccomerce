@@ -2,66 +2,55 @@ const order = require("../model/order");
 const product = require("../model/product");
 const { Status } = require("../model/order");
 const { PaymentType } = require("../model/order");
+const category = require("../model/category");
+const { populate } = require("../model/users");
+
+
 exports.createOrder = async (req, res) => {
   try {
-    const { customerId, productDetails, status, paymentType, shipmentId } =
-      req.body;
+    const { customerId, productId, quantity, status, paymentType, shipmentId } = req.body;
 
-    let paymentValue;
+    if (!customerId || !productId || !quantity || !paymentType || !shipmentId) {
+      return res.status(400).json({ message: "Order fields missing" });
+    }
 
-    if (
-      typeof paymentType === "number" &&
-      Object.values(PaymentType).includes(paymentType)
-    ) {
-      paymentValue = paymentType;
-    } else {
+    if (!Object.values(PaymentType).includes(paymentType)) {
       return res.status(400).json({ message: "Invalid payment type" });
     }
-    let statusValue;
-    if (typeof status === "number" && Object.values(Status).includes(status)) {
-      statusValue = status;
-    } else {
-      return res.status(400).json({ message: "Invalid Status" });
-    }
-    if (!customerId || !productDetails || !paymentType || !shipmentId) {
-      return res.status(404).json({ message: "Order fields missing" });
+
+    if (!Object.values(Status).includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
     }
 
-    let total = 0;
+    const productData = await product.findById(productId);
+    if (!productData) {
+      return res.status(404).json({ message: `Product not found: ${productId}` });
+    }
 
-    const updatedProductDetails = await Promise.all(
-      productDetails.map(async (item) => {
-        const productData = await product.findById(item.productId);
+    if (productData.stock < quantity) {
+      return res.status(400).json({ message: `Not enough stock for ${productData.ProductName}` });
+    }
 
-        if (!productData) {
-          throw new Error(`Product not found: ${item.productId}`);
-        }
-        if (productData.stock < item.quantity) {
-          return res.status(404).json({
-            message: `Not enough stock for ${productData.ProductName}`,
-          });
-        }
-        total += productData.price * item.quantity;
-        return {
-          productId: item.productId,
-          quantity: item.quantity,
-          price: productData.price,
-        };
-      })
-    );
+    
+    productData.stock -= quantity;
+    await productData.save();
+
+    const totalAmount = productData.price * quantity;
 
     const orders = await order.create({
       customerId,
-      productDetails: updatedProductDetails,
-      totalAmount: total,
-      status: statusValue,
-      paymentType: paymentValue,
+      productId,
+      quantity,
+      totalAmount,
+      status,
+      paymentType,
       shipmentId,
     });
 
-    res.status(200).json(orders);
+    res.status(201).json(orders);
+    
   } catch (error) {
-    res.status(500).json({ message: "Server error ", error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -69,8 +58,14 @@ exports.getAllOrder = async (req, res) => {
   try {
     const orders = await order
       .find()
-      .populate("customerId")
-      .populate("productDetails.productId")
+      .populate("customerId").populate({path:"productId",
+        populate:[
+          { path: "categoryById", model: "category" },
+          { path: "createdBy", model: "User" },
+          { path: "gstCategoryId", model: "gstCategory" },
+          { path: "discountId", model: "discount"}
+        ]
+      })
       .populate("shipmentId");
     if (!orders.length) {
       return res.status(404).json({ message: "Order not found" });
@@ -86,14 +81,24 @@ exports.getOrderById = async (req, res) => {
     const orders = await order
       .findById(req.params.id)
       .populate("customerId")
-      .populate("productDetails.productId")
+      .populate({
+        path: "productId",
+        populate: [
+          { path: "categoryById", model: "category" },
+          { path: "createdBy", model: "User" },
+          { path: "gstCategoryId", model: "gstCategory" },
+          { path: "discountId", model: "discount" }
+        ]
+      })
       .populate("shipmentId");
+
     if (!orders) {
       return res.status(404).json({ message: "Order not found" });
     }
+
     res.status(200).json(orders);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -156,7 +161,7 @@ exports.getPendingOrders = async (req, res) => {
     const pendingOrders = await order
       .find({ status: Status.Pending })
       .populate("customerId")
-      .populate("productDetails.productId")
+      .populate("productId")
       .populate("shipmentId");
 
     if (!pendingOrders.length) {
@@ -172,7 +177,7 @@ exports.getDeliveredOrders = async (req, res) => {
     const DeliveredOrders = await order
       .find({ status: Status.Delivery })
       .populate("customerId")
-      .populate("productDetails.productId")
+      .populate("productId")
       .populate("shipmentId");
 
     if (!DeliveredOrders.length) {
@@ -188,7 +193,7 @@ exports.getShippedOrders = async (req, res) => {
     const shippedOrders = await order
       .find({ status: Status.Shipped })
       .populate("customerId")
-      .populate("productDetails.productId")
+      .populate("productId")
       .populate("shipmentId");
 
     if (!shippedOrders.length) {
@@ -205,7 +210,7 @@ exports.getCancelOrders = async (req, res) => {
     const cancelOrders = await order
       .find({ status: Status.Cancel })
       .populate("customerId")
-      .populate("productDetails.productId")
+      .populate("productId")
       .populate("shipmentId");
 
     if (!cancelOrders.length) {
@@ -228,7 +233,7 @@ exports.getOrderByCustomer = async (req, res) => {
     const orders = await order
       .find({ customerId })
       .populate("customerId")
-      .populate("productDetails.productId")
+      .populate("productId")
       .populate("shipmentId");
 
     if (!orders.length) {

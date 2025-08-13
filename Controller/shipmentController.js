@@ -2,10 +2,15 @@ const Shipments = require("../model/shipment");
 
 exports.createShipment = async (req, res) => {
   try {
-    const shipment = await Shipments.create(req.body);
+    const {mobileNumber} = req.body;
+    if(!/^\d{10}$/.test(mobileNumber)){
+return res.status(400).json({message:" MobileNumber must be 10 digits"})
+    }
+    const shipment = await Shipments.create({...req.body,mobileNumber});
     res.status(200).json(shipment);
   } catch (err) {
-    res.status(500).json({ message: "Shipment does not create" });
+    res.status(500).json({ message: "Shipment does not create",error:err.message
+     });
   }
 };
 

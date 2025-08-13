@@ -16,7 +16,7 @@ router.delete("/delete/:id", verifyToken, orderController.deleteOrderById);
 router.patch("/status/:id", verifyToken, orderController.statusUpdate);
 
 router.get(
-  "/status/pending/:status",
+  "/status/pending",
   verifyToken,
   orderController.getPendingOrders
 );

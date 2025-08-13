@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const categorySchema = mongoose.Schema(
   {
+
+    _id: { type: Number }, 
     name: {
       type: String,
     },
@@ -12,7 +15,7 @@ const categorySchema = mongoose.Schema(
       type: Number,
     },
     createdBy: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: Number,
       ref: "User",
     },
   },
@@ -22,4 +25,5 @@ const categorySchema = mongoose.Schema(
   }
 );
 
+categorySchema.plugin(AutoIncrement,{id:'categoryId',$inc_field : '_id'});
 module.exports = mongoose.model("category", categorySchema);
