@@ -1,7 +1,7 @@
 const replacement = require("../model/replacement");
 const order = require("../model/order");
 const products = require("../model/product");
-
+const { Status } = require("../model/order");
 
 exports.createReplacement = async (req, res) => {
   try {
@@ -17,6 +17,10 @@ exports.createReplacement = async (req, res) => {
     const newProduct = await products.findById(newProductId);
     if (!newProduct)
       return res.status(404).json({ message: "New product not found" });
+
+    if (preOrder.status !== Status.ReturnRequested) {
+      return res.status(400).json({ message: "Return order only replacement" });
+    }
 
     const oldProductId = replaceOrder.productId;
 

@@ -1,10 +1,11 @@
 const mongoose = require("mongoose");
-const AutoIncrement = require('mongoose-sequence')(mongoose);
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 const Status = {
   Pending: 0,
   Shipped: 1,
   Delivery: 2,
   Cancel: 3,
+  ReturnRequested: 4,
 };
 
 const PaymentType = {
@@ -14,33 +15,39 @@ const PaymentType = {
 };
 const orderSchema = new mongoose.Schema(
   {
-    _id:{
-      type:Number,
+    _id: {
+      type: Number,
     },
     customerId: {
       type: Number,
       ref: "Customer",
       required: true,
     },
-    
-        productId: {
-          type:Number,
-          ref: "product",
-          required: true,
-        },
-        
-        quantity: {
-          type: Number,
-          required: true,
-          min: 1,
-        },
-      
+
+    productId: {
+      type: Number,
+      ref: "product",
+      required: true,
+    },
+
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+
     totalAmount: {
       type: Number,
     },
     status: {
       type: Number,
-      enum: [Status.Pending, Status.Shipped, Status.Delivery, Status.Cancel],
+      enum: [
+        Status.Pending,
+        Status.Shipped,
+        Status.Delivery,
+        Status.Cancel,
+        Status.ReturnRequested,
+      ],
       default: Status.Pending,
     },
     paymentType: {
@@ -53,6 +60,13 @@ const orderSchema = new mongoose.Schema(
       ref: "shipment",
       required: true,
     },
+    validReason: {
+      type: String,
+      default: null,
+    },
+    deliveryDate: {
+      type: Date,
+    },
   },
   {
     versionKey: false,
@@ -60,7 +74,7 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-orderSchema.plugin(AutoIncrement,{id:'orderId',$inc_field:'_id'})
+orderSchema.plugin(AutoIncrement, { id: "orderId", $inc_field: "_id" });
 
 module.exports = mongoose.model("Order", orderSchema);
 module.exports.Status = Status;

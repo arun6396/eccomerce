@@ -14,27 +14,14 @@ router.put("/update/:id", verifyToken, orderController.updateOderById);
 router.delete("/delete/:id", verifyToken, orderController.deleteOrderById);
 
 router.patch("/status/:id", verifyToken, orderController.statusUpdate);
-
-router.get(
-  "/status/pending",
-  verifyToken,
-  orderController.getPendingOrders
-);
-
-router.get(
-  "/status/delivered",
-  verifyToken,
-  orderController.getDeliveredOrders
-);
-
-router.get("/status/shipped", verifyToken, orderController.getShippedOrders);
-
-router.get("/status/cancel", verifyToken, orderController.getCancelOrders);
+router.get("/get/status/:status", verifyToken, orderController.getOrderStatus);
 
 router.get(
   "/customer/:customerId",
   verifyToken,
   orderController.getOrderByCustomer
 );
+
+router.patch("/return/:id", verifyToken, orderController.returnOrderById);
 
 module.exports = router;

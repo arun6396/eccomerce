@@ -5,10 +5,10 @@ const { PaymentType } = require("../model/order");
 const category = require("../model/category");
 const { populate } = require("../model/users");
 
-
 exports.createOrder = async (req, res) => {
   try {
-    const { customerId, productId, quantity, status, paymentType, shipmentId } = req.body;
+    const { customerId, productId, quantity, status, paymentType, shipmentId } =
+      req.body;
 
     if (!customerId || !productId || !quantity || !paymentType || !shipmentId) {
       return res.status(400).json({ message: "Order fields missing" });
@@ -24,14 +24,17 @@ exports.createOrder = async (req, res) => {
 
     const productData = await product.findById(productId);
     if (!productData) {
-      return res.status(404).json({ message: `Product not found: ${productId}` });
+      return res
+        .status(404)
+        .json({ message: `Product not found: ${productId}` });
     }
 
     if (productData.stock < quantity) {
-      return res.status(400).json({ message: `Not enough stock for ${productData.ProductName}` });
+      return res
+        .status(400)
+        .json({ message: `Not enough stock for ${productData.ProductName}` });
     }
 
-    
     productData.stock -= quantity;
     await productData.save();
 
@@ -48,7 +51,6 @@ exports.createOrder = async (req, res) => {
     });
 
     res.status(201).json(orders);
-    
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }
@@ -58,13 +60,15 @@ exports.getAllOrder = async (req, res) => {
   try {
     const orders = await order
       .find()
-      .populate("customerId").populate({path:"productId",
-        populate:[
+      .populate("customerId")
+      .populate({
+        path: "productId",
+        populate: [
           { path: "categoryById", model: "category" },
           { path: "createdBy", model: "User" },
           { path: "gstCategoryId", model: "gstCategory" },
-          { path: "discountId", model: "discount"}
-        ]
+          { path: "discountId", model: "discount" },
+        ],
       })
       .populate("shipmentId");
     if (!orders.length) {
@@ -87,8 +91,8 @@ exports.getOrderById = async (req, res) => {
           { path: "categoryById", model: "category" },
           { path: "createdBy", model: "User" },
           { path: "gstCategoryId", model: "gstCategory" },
-          { path: "discountId", model: "discount" }
-        ]
+          { path: "discountId", model: "discount" },
+        ],
       })
       .populate("shipmentId");
 
@@ -130,7 +134,7 @@ exports.deleteOrderById = async (req, res) => {
 
 exports.statusUpdate = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, validReason } = req.body;
 
     const validateStatus = [
       Status.Pending,
@@ -138,87 +142,72 @@ exports.statusUpdate = async (req, res) => {
       Status.Delivery,
       Status.Cancel,
     ];
+
     if (!validateStatus.includes(status)) {
-      return res.status(404).json({ messsage: "Incorrect status" });
+      return res.status(400).json({ message: "Incorrect status" });
+    }
+
+    const currentOrder = await order.findById(req.params.id);
+    if (!currentOrder) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (currentOrder.status === Status.Delivery) {
+      return res.status(400).json({
+        message: "Your order is already delivered, so it cannot be cancelled",
+      });
+    }
+
+    const updatedData = { status };
+    if (status === Status.Cancel) {
+      if (!validReason || validReason.trim() === "") {
+        return res.status(400).json({ message: "Cancel reason is required" });
+      }
+      updatedData.validReason = validReason;
     }
 
     const updateStatus = await order.findByIdAndUpdate(
       req.params.id,
-      { status },
+      updatedData,
       { new: true }
     );
-    if (!updateStatus) {
-      return res.status(404).json({ message: "Order not found" });
-    }
+
     res.status(200).json(updateStatus);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-exports.getPendingOrders = async (req, res) => {
+exports.getOrderStatus = async (req, res) => {
   try {
-    const pendingOrders = await order
-      .find({ status: Status.Pending })
+    const status = Number(req.params.status);
+    if (!Object.values(Status).includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const orderStatus = await order
+      .find({ status })
       .populate("customerId")
-      .populate("productId")
+      .populate({
+        path: "productId",
+        populate: [
+          { path: "categoryById", model: "category" },
+          { path: "createdBy", model: "User" },
+          { path: "gstCategoryId", model: "gstCategory" },
+          { path: "discountId", model: "discount" },
+        ],
+      })
       .populate("shipmentId");
 
-    if (!pendingOrders.length) {
-      return res.status(404).json({ mesasge: "Pending order not found" });
+    if (!orderStatus.length) {
+      return res
+        .status(404)
+        .json({ message: "No orders found for this status" });
     }
-    res.status(200).json({ pendingOrders });
-  } catch (error) {
-    res.status(500).json({ mesasge: "Server error ", error });
-  }
-};
-exports.getDeliveredOrders = async (req, res) => {
-  try {
-    const DeliveredOrders = await order
-      .find({ status: Status.Delivery })
-      .populate("customerId")
-      .populate("productId")
-      .populate("shipmentId");
 
-    if (!DeliveredOrders.length) {
-      return res.status(404).json({ mesasge: "Delivered order not found" });
-    }
-    res.status(200).json({ DeliveredOrders });
+    res.status(200).json(orderStatus);
   } catch (error) {
-    res.status(500).json({ mesasge: "Server error ", error });
-  }
-};
-exports.getShippedOrders = async (req, res) => {
-  try {
-    const shippedOrders = await order
-      .find({ status: Status.Shipped })
-      .populate("customerId")
-      .populate("productId")
-      .populate("shipmentId");
-
-    if (!shippedOrders.length) {
-      return res.status(404).json({ mesasge: "Shipped order not found" });
-    }
-    res.status(200).json({ shippedOrders });
-  } catch (error) {
-    res.status(500).json({ mesasge: "Server error ", error });
-  }
-};
-
-exports.getCancelOrders = async (req, res) => {
-  try {
-    const cancelOrders = await order
-      .find({ status: Status.Cancel })
-      .populate("customerId")
-      .populate("productId")
-      .populate("shipmentId");
-
-    if (!cancelOrders.length) {
-      return res.status(404).json({ mesasge: "Cancel order not found" });
-    }
-    res.status(200).json({ cancelOrders });
-  } catch (error) {
-    res.status(500).json({ mesasge: "Server error ", error });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -245,5 +234,42 @@ exports.getOrderByCustomer = async (req, res) => {
     res.status(200).json(orders);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
+  }
+};
+
+exports.returnOrderById = async (req, res) => {
+  try {
+    const orderId = req.params.id;
+    const { customerId, validReason } = req.body;
+
+    const foundOrder = await order.findById(orderId);
+    if (!foundOrder) {
+      return res.status(400).json({ message: "Order not found" });
+    }
+
+    if (!validReason || validReason.trim() === "") {
+      return res.status(400).json({ message: "Reason is required" });
+    }
+
+    if (foundOrder.customerId !== Number(customerId)) {
+      return res.status(404).json({ message: "Customer not found" });
+    }
+
+    if (foundOrder.status !== Status.Delivery) {
+      return res
+        .status(400)
+        .json({ message: "Order must be delivered before return" });
+    }
+
+    foundOrder.status = Status.ReturnRequested;
+    foundOrder.validReason = validReason;
+    await foundOrder.save();
+
+    res.status(200).json({
+      message: "Return request submitted successfully",
+      order: foundOrder,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
