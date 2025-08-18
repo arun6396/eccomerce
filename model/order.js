@@ -15,17 +15,14 @@ const PaymentType = {
 };
 const orderSchema = new mongoose.Schema(
   {
-    _id: {
-      type: Number,
-    },
     customerId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       ref: "Customer",
       required: true,
     },
 
     productId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       ref: "product",
       required: true,
     },
@@ -56,7 +53,7 @@ const orderSchema = new mongoose.Schema(
       required: true,
     },
     shipmentId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       ref: "shipment",
       required: true,
     },
@@ -74,7 +71,10 @@ const orderSchema = new mongoose.Schema(
   }
 );
 
-orderSchema.plugin(AutoIncrement, { id: "orderId", $inc_field: "_id" });
+orderSchema.plugin(AutoIncrement, {
+  id: "orderIdCounter",
+  inc_field: "orderId",
+});
 
 module.exports = mongoose.model("Order", orderSchema);
 module.exports.Status = Status;

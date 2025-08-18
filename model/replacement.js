@@ -1,29 +1,31 @@
-const mongoose = require('mongoose');
-const AutoIncrement = require('mongoose-sequence')(mongoose);
+const mongoose = require("mongoose");
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
-const replacementSchema = mongoose.Schema({
-_id:{
-    type:Number
-},
-previousOrderId:{
-type:Number,
-ref:'order'
-},
-replaceOrderId : {
-    type:Number,
-    ref:'order'
-},
+const replacementSchema = mongoose.Schema(
+  {
+    previousOrderId: {
+      type: mongoose.Schema.ObjectId,
+      ref: "order",
+    },
+    replaceOrderId: {
+      type: mongoose.Schema.ObjectId,
 
-newProductId:{
-    type:Number,
-    ref:'product'
-},
-},
-{
-    versionKey:false,
-},
-{timestamps:true}
-)
-replacementSchema.plugin(AutoIncrement,{id:'replacementId',$inc_field:'_id'});
+      ref: "order",
+    },
 
-module.exports = mongoose.model("replacement",replacementSchema);
+    newProductId: {
+      type: mongoose.Schema.ObjectId,
+      ref: "product",
+    },
+  },
+  {
+    versionKey: false,
+  },
+  { timestamps: true }
+);
+replacementSchema.plugin(AutoIncrement, {
+  id: "replacementIdCounter",
+  inc_field: "replacementId",
+});
+
+module.exports = mongoose.model("replacement", replacementSchema);

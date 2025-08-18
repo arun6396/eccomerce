@@ -1,27 +1,29 @@
-const mongoose = require('mongoose');
-const AutoIncrement = require('mongoose-sequence')(mongoose)
+const mongoose = require("mongoose");
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
-const discountSchema = mongoose.Schema({
-    _id:{
-        type:Number,
+const discountSchema = mongoose.Schema(
+  {
+    minDiscount: {
+      type: Number,
     },
-    minDiscount:{
-        type:Number,
+    maxDiscount: {
+      type: Number,
     },
-    maxDiscount:{
-        type:Number
+    createdBy: {
+      type: mongoose.Schema.ObjectId,
+      ref: "users",
     },
-    createdBy:{
-        type:Number,
-        ref:"User"
-    }
+  },
+  {
+    versionKey: false,
+    timestamps: true,
+  }
+);
 
-},
-{
-   versionKey:false,
-   timestamps: true
-  });
+discountSchema.plugin(AutoIncrement, {
+  id: "discountIdCounter",
+  inc_field: "discountId",
+  start_seq: 1,
+});
 
-discountSchema.plugin(AutoIncrement, { id: 'discountId', inc_field: '_id' });
-
-module.exports=mongoose.model("discount",discountSchema);
+module.exports = mongoose.model("discount", discountSchema);

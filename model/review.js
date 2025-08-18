@@ -4,22 +4,19 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const reviewSchema = mongoose.Schema(
   {
-    _id: {
-      type: Number,
-    },
     orderId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       ref: "Order",
     },
 
     customerId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       ref: "Customer",
       required: true,
     },
 
     productId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       ref: "product",
       required: true,
     },
@@ -40,5 +37,8 @@ const reviewSchema = mongoose.Schema(
   }
 );
 
-reviewSchema.plugin(AutoIncrement, { id: "reviewId", $inc_field: "_id" });
+reviewSchema.plugin(AutoIncrement, {
+  id: "reviewIdCounter",
+  inc_field: "reviewId",
+});
 module.exports = mongoose.model("review", reviewSchema);

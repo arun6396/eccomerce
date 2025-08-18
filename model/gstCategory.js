@@ -3,9 +3,6 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const gstCategorySchema = mongoose.Schema(
   {
-    _id: {
-      type: Number,
-    },
     gstCategoryName: {
       type: String,
     },
@@ -19,6 +16,9 @@ const gstCategorySchema = mongoose.Schema(
   { versionKey: false, timestamps: true }
 );
 
-gstCategorySchema.plugin(AutoIncrement,{id:'gstCategoryId',$inc_field:'_id'});
+gstCategorySchema.plugin(AutoIncrement, {
+  id: "gstCategoryIdCounter",
+  inc_field: "gstCategoryId",
+});
 
 module.exports = mongoose.model("gstCategory", gstCategorySchema);

@@ -104,4 +104,19 @@ exports.deleteReviewById = async (req, res) => {
   }
 };
 
+exports.filterReview = async (req, res) => {
+  try {
+    const rating = req.params.rating;
 
+    const ratingProduct = await review
+      .find({ rating: Number(rating) }).populate({path:"customerId",select : "customerName"})
+      .populate({ path: "productId", select: "ProductName" });
+
+    if (!ratingProduct.length) {
+      return res.status(404).json({ message: "product not found" });
+    }
+    res.status(200).json(ratingProduct);
+  } catch (error) {
+    res.status(500).json({ message: "Server error ", error: error.message });
+  }
+};

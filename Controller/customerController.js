@@ -3,6 +3,7 @@ const Customers = require("../model/customer");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const customer = require("../model/customer");
+const users = require("../model/users");
 
 exports.createCustomer = async (req, res) => {
   try {

@@ -1,38 +1,34 @@
 const mongoose = require("mongoose");
-const AutoIncrement = require('mongoose-sequence')(mongoose);
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const productSchema = mongoose.Schema(
   {
-    _id:{
-      type:Number,
-    },
-
     ProductName: {
       type: String,
       required: true,
     },
     price: { type: Number, required: true },
     quantity: { type: Number, default: 1 },
-    categoryById: { type:Number, ref: "category" },
+    categoryById: { type: mongoose.Schema.ObjectId, ref: "category" },
     brand: { type: String },
     description: { type: String },
     stock: { type: Number, default: 0 },
     isAvailable: { type: Boolean, default: true },
     gstCategoryId: {
-      type:Number,
+      type: mongoose.Schema.ObjectId,
       ref: "gstCategory",
     },
     discountId: {
-      type: Number,
+      type: mongoose.Schema.ObjectId,
       ref: "discount",
     },
     createdBy: {
-      type: Number,
-      ref: "User",
+      type: mongoose.Schema.ObjectId,
+      ref: "users",
     },
     updatedBy: {
-      type:Number,
-      ref: "User",
+      type: mongoose.Schema.ObjectId,
+      ref: "users",
     },
   },
   {
@@ -41,5 +37,8 @@ const productSchema = mongoose.Schema(
   }
 );
 
-productSchema.plugin(AutoIncrement,{id:'productId',$inc_field:'_id'})
+productSchema.plugin(AutoIncrement, {
+  id: "productIdCounter",
+  inc_field: "productId",
+});
 module.exports = mongoose.model("product", productSchema);

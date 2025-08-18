@@ -64,10 +64,10 @@ exports.getAllOrder = async (req, res) => {
       .populate({
         path: "productId",
         populate: [
-          { path: "categoryById", model: "category" },
-          { path: "createdBy", model: "User" },
-          { path: "gstCategoryId", model: "gstCategory" },
-          { path: "discountId", model: "discount" },
+          { path: "categoryById" },
+          { path: "createdBy" },
+          { path: "gstCategoryId" },
+          { path: "discountId" },
         ],
       })
       .populate("shipmentId");
@@ -89,7 +89,7 @@ exports.getOrderById = async (req, res) => {
         path: "productId",
         populate: [
           { path: "categoryById", model: "category" },
-          { path: "createdBy", model: "User" },
+          { path: "createdBy", model: "users" },
           { path: "gstCategoryId", model: "gstCategory" },
           { path: "discountId", model: "discount" },
         ],
@@ -141,6 +141,7 @@ exports.statusUpdate = async (req, res) => {
       Status.Shipped,
       Status.Delivery,
       Status.Cancel,
+      Status.ReturnRequested,
     ];
 
     if (!validateStatus.includes(status)) {
@@ -165,7 +166,13 @@ exports.statusUpdate = async (req, res) => {
       }
       updatedData.validReason = validReason;
     }
-
+    if (status === Status.Cancel) {
+      await product.findByIdAndUpdate(
+        currentOrder.productId,
+        { $inc: { stock: currentOrder.quantity } },
+        { new: true }
+      );
+    }
     const updateStatus = await order.findByIdAndUpdate(
       req.params.id,
       updatedData,
@@ -192,7 +199,7 @@ exports.getOrderStatus = async (req, res) => {
         path: "productId",
         populate: [
           { path: "categoryById", model: "category" },
-          { path: "createdBy", model: "User" },
+          { path: "createdBy", model: "users" },
           { path: "gstCategoryId", model: "gstCategory" },
           { path: "discountId", model: "discount" },
         ],
@@ -251,7 +258,7 @@ exports.returnOrderById = async (req, res) => {
       return res.status(400).json({ message: "Reason is required" });
     }
 
-    if (foundOrder.customerId !== Number(customerId)) {
+    if (foundOrder.customerId.toString() !== customerId) {
       return res.status(404).json({ message: "Customer not found" });
     }
 
@@ -273,3 +280,4 @@ exports.returnOrderById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
