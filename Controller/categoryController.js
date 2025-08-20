@@ -11,7 +11,9 @@ exports.createCategory = async (req, res) => {
 
 exports.getAllCategory = async (req, res) => {
   try {
-    const getCategory = await category.find().populate("createdBy");
+    const getCategory = await category
+      .find()
+      .populate({ path: "createdBy", select: "username" });
     if (!getCategory.length) {
       return res.status(404).json({ message: "Category not found" });
     }
@@ -25,7 +27,7 @@ exports.getCategoryById = async (req, res) => {
   try {
     const getCategory = await category
       .findById(req.params.id)
-      .populate("createdBy");
+      .populate({ path: "createdBy", select: "username" });
     if (!getCategory) {
       return res.status(404).json({ message: "Category not found" });
     }
@@ -57,7 +59,7 @@ exports.deleteCategoryById = async (req, res) => {
     if (!deleteCategory) {
       return res.status(404).json({ message: "Category not found" });
     }
-    res.status(200).json({message: "Category successfully deleted"});
+    res.status(200).json({ message: "Category successfully deleted" });
   } catch (error) {
     res.status(500).json({ message: "Server error ", error: error.message });
   }

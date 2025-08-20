@@ -60,7 +60,7 @@ exports.getAllOrder = async (req, res) => {
   try {
     const orders = await order
       .find()
-      .populate("customerId")
+      .populate({ path: "customerId", select: "customerName" })
       .populate({
         path: "productId",
         populate: [
@@ -84,7 +84,7 @@ exports.getOrderById = async (req, res) => {
   try {
     const orders = await order
       .findById(req.params.id)
-      .populate("customerId")
+      .populate({ path: "customerId", select: "customerName" })
       .populate({
         path: "productId",
         populate: [
@@ -194,7 +194,7 @@ exports.getOrderStatus = async (req, res) => {
 
     const orderStatus = await order
       .find({ status })
-      .populate("customerId")
+      .populate({ path: "customerId", select: "customerName" })
       .populate({
         path: "productId",
         populate: [
@@ -228,7 +228,7 @@ exports.getOrderByCustomer = async (req, res) => {
 
     const orders = await order
       .find({ customerId })
-      .populate("customerId")
+      .populate({ path: "customerId", select: "customerName" })
       .populate("productId")
       .populate("shipmentId");
 
@@ -280,4 +280,3 @@ exports.returnOrderById = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-

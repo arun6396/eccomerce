@@ -33,7 +33,7 @@ exports.getAllProductId = async (req, res) => {
       .populate("categoryById")
       .populate("gstCategoryId")
       .populate("discountId")
-      .populate("createdBy");
+      .populate({ path: "createdBy", select: "username" });
     if (!product.length) {
       return res.status(404).json({ message: "No products found" });
     }
@@ -50,7 +50,7 @@ exports.getProductById = async (req, res) => {
       .populate("categoryById")
       .populate("gstCategoryId")
       .populate("discountId")
-      .populate("createdBy");
+      .populate({ path: "createdBy", select: "username" });
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.status(200).json(product);
   } catch (err) {
@@ -132,7 +132,7 @@ exports.productSearch = async (req, res) => {
       .find(filter)
       .populate("gstCategoryId")
       .populate("discountId")
-      .populate("createdBy");
+      .populate({ path: "createdBy", select: "username" });
 
     if (category) {
       query = query.populate({
@@ -175,7 +175,7 @@ exports.findByProductBrand = async (req, res) => {
       .populate("categoryById")
       .populate("gstCategoryId")
       .populate("discountId")
-      .populate("createdBy");
+      .populate({ path: "createdBy", select: "username" });
     if (!productFound) {
       return res.status(400).json({ message: "Product not Found" });
     }
@@ -216,15 +216,16 @@ exports.findProductByCategoryName = async (req, res) => {
     }
 
     const productsList = await products
-      .find({ categoryById: Category._id }) 
+      .find({ categoryById: Category._id })
       .populate("categoryById");
 
     if (productsList.length === 0) {
-      return res.status(404).json({ message: "No products found for this category" });
+      return res
+        .status(404)
+        .json({ message: "No products found for this category" });
     }
 
     res.status(200).json(productsList);
-
   } catch (error) {
     res.status(500).json({ message: "Server error", error: error.message });
   }

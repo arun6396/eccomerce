@@ -46,7 +46,7 @@ exports.getAllReview = async (req, res) => {
   try {
     const reviews = await review
       .find()
-      .populate("customerId")
+      .populate({path : "customerId", select:"customerName"})
       .populate({
         path: "productId",
         populate: [{ path: "categoryById", model: "category" }],
@@ -65,7 +65,7 @@ exports.getByReviewId = async (req, res) => {
   try {
     const reviews = await review
       .findById(req.params.id)
-      .populate("customerId")
+      .populate({path : "customerId", select:"customerName"})
       .populate("productId");
     if (!reviews) {
       return res.status(404).json({ message: "Review not found" });

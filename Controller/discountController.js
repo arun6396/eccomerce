@@ -17,7 +17,10 @@ exports.createDiscount = async (req, res) => {
 
 exports.getAllDiscounts = async (req, res) => {
   try {
-    const discounts = await Discount.find().populate("createdBy");
+    const discounts = await Discount.find().populate({
+      path: "createdBy",
+      select: "username",
+    });
     res.status(200).json(discounts);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -26,9 +29,10 @@ exports.getAllDiscounts = async (req, res) => {
 
 exports.getDiscountById = async (req, res) => {
   try {
-    const discount = await Discount.findById(req.params.id).populate(
-      "createdBy"
-    );
+    const discount = await Discount.findById(req.params.id).populate({
+      path: "createdBy",
+      select: "username",
+    });
     if (!discount)
       return res.status(404).json({ message: "Discount not found" });
     res.status(200).json(discount);

@@ -9,7 +9,7 @@ const discountSchema = mongoose.Schema(
     maxDiscount: {
       type: Number,
     },
-    createdBy: {
+    createdBy: { 
       type: mongoose.Schema.ObjectId,
       ref: "users",
     },
