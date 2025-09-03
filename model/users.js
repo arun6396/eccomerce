@@ -19,6 +19,15 @@ const userSchema = new mongoose.Schema(
       enum: [Role.ADMIN, Role.MANAGER, Role.USER],
       required: true,
     },
+lockuntil:{
+  type:Date,
+  default:null
+},
+failedLoginAttempts:{
+  type:Number,
+  default:0
+}
+,
   },
   { versionKey: false, timestamps: true, strict: "throw" }
 );
