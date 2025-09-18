@@ -9,7 +9,7 @@ exports.registerUser = async (req, res) => {
     const { username, mobileNumber, email, Dob, password, role } = req.body;
 
     const mobileRegex = /^[6-9]\d{9}$/;
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
     if (typeof role !== "number" || !Object.values(Role).includes(role)) {
       return res.status(400).json(responseFormatter({}, 400, "Invalid role"));
@@ -237,11 +237,11 @@ exports.loginUserByEmail = async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
-    if (!emailRegex.test(email)) {
-      return res
-        .status(400)
-        .json(responseFormatter({}, 400, "Invalid email format"));
-    }
+    // if (!emailRegex.test(email)) {
+    //   return res
+    //     .status(400)
+    //     .json(responseFormatter({}, 400, "Invalid email format"));
+    // }
 
     if (!user) {
       return res

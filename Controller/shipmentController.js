@@ -12,8 +12,7 @@ return res.status(400).json({message:" MobileNumber must be 10 digits"})
     res.status(500).json({ message: "Shipment does not create",error:err.message
      });
   }
-};
-
+};   
 exports.getAllShipment = async (req, res) => {
   try {
     const shipment = await Shipments.find();
